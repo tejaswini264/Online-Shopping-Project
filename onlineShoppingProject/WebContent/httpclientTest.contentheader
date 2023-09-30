@@ -1,0 +1,22 @@
+@Test
+public void contentHeader() 
+{
+  ConnectionProvider fixed = ConnectionProvider.fixed("test", 1);
+  HttpClient client =
+      HttpClient.create(fixed)
+           .wiretap(true)
+           .headers(h -> h.add("content-length", "1"));
+  HttpResponseStatus r =
+      client.request(HttpMethod.GET)
+         .uri("http://google.com")
+         .send(ByteBufFlux.fromString(Mono.just(" ")))
+         .responseSingle((res, buf) -> Mono.just(res.status()))
+         .block(Duration.ofSeconds(30));
+  client.request(HttpMethod.GET)
+     .uri("http://google.com")
+     .send(ByteBufFlux.fromString(Mono.just(" ")))
+     .responseSingle((res, buf) -> Mono.just(res.status()))
+     .block(Duration.ofSeconds(30));
+  Assert.assertEquals(r, HttpResponseStatus.BAD_REQUEST);
+  fixed.dispose();
+}
